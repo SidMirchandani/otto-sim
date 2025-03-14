@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Otto Engine Clicker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Using Outfit font (sans-serif) -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #66cca8;
+      --primary-light: #88eec5;
+      --primary-dark: #44aa75;
+      --secondary: #ff85a2;
+      --bg: #f8f9fa;
+      --text: #333;
+      --light-text: #666;
+      --card-bg: white;
+      --gradient-start: #66cc92;
+      --gradient-end: #66ddb8;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+    header {
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      color: white;
+      padding: 4.5rem 2.5rem;
+      margin: -1rem -1rem -2rem -1rem;
+      text-align: center;
+      width: 100vw;
+      position: relative;
+      left: 50%;
+      transform: translateX(-50%);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      height: 300px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      z-index: -1;
+    }
+    header h1 {
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    header h1 svg { width: 1.5rem; height: 1.5rem; }
+    header p {
+      font-weight: 300;
+      opacity: 0.9;
+      max-width: 800px;
+      margin: 0.5rem auto 0;
+      font-size: 1.2rem;
+    }
+    .game-container {
+      display: flex;
+      gap: 1.5rem;
+      flex: 1;
+      position: relative;
+      z-index: 1;
+    }
+    @media (max-width: 768px) { .game-container { flex-direction: column; } }
+    .engine-section, .progress-section {
+      flex: 1;
+      background: var(--card-bg);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .engine-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .stats-bar {
+      display: flex;
+      width: 100%;
+      justify-content: space-around;
+      background: rgba(119, 102, 204, 0.1);
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat { text-align: center; }
+    .stat-value { font-size: 1.5rem; font-weight: 600; color: var(--primary); }
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--light-text);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .engine-container {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .engine {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-light), var(--primary-dark));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: transform 0.2s;
+    }
+    .engine:active { transform: scale(0.98); }
+    .engine-inner {
+      width: 85%;
+      height: 85%;
+      background: var(--card-bg);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: var(--primary);
+      position: relative;
+      overflow: hidden;
+    }
+    .engine-step {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      padding: 2rem;
+      opacity: 0;
+      transition: all 0.5s ease-in-out;
+      transform: scale(0.8);
+    }
+    .engine-step.active {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .engine-step-title { color: var(--primary-dark); font-weight: 600; margin-bottom: 0.5rem; }
+    .engine-step-desc { font-size: 0.8rem; color: var(--light-text); }
+    .particles {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .particle {
+      position: absolute;
+      background: var(--secondary);
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0;
+    }
+    .engine-click-value {
+      position: absolute;
+      color: var(--secondary);
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.7s ease-out;
+    }
+    .progress-section { display: flex; flex-direction: column; }
+    .progress-title {
+      color: var(--primary);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .progress-title svg { width: 1.2rem; height: 1.2rem; }
+    .progress-map {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 0.5rem;
+      max-height: 600px;
+    }
+    .progress-map::-webkit-scrollbar { width: 6px; }
+    .progress-map::-webkit-scrollbar-track {
+      background: rgba(119, 102, 204, 0.1);
+      border-radius: 3px;
+    }
+    .progress-map::-webkit-scrollbar-thumb {
+      background: var(--primary-light);
+      border-radius: 3px;
+    }
+    .path { margin-bottom: 1.5rem; }
+    .path-header {
+      font-weight: 600;
+      color: var(--primary-dark);
+      margin-bottom: 0.5rem;
+    }
+    .node {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      border-radius: 0.5rem;
+      background: rgba(119, 102, 204, 0.05);
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .node:hover { background: rgba(119, 102, 204, 0.1); }
+    .node.active { background: rgba(119, 102, 204, 0.15); border-left: 3px solid var(--primary); }
+    .node.locked { 
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .node.affordable {
+      opacity: 1;
+      border: 2px solid var(--secondary);
+      box-shadow: 0 0 10px rgba(255, 133, 162, 0.3);
+      background: rgba(119, 102, 204, 0.1);
+    }
+    .node-icon {
+      width: 2rem;
+      height: 2rem;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.5rem;
+      flex-shrink: 0;
+    }
+    .node-content { flex: 1; }
+    .node-title { font-weight: 500; }
+    .node-desc { font-size: 0.8rem; color: var(--light-text); }
+    .node-cost {
+      background: var(--secondary);
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .tooltip {
+      position: absolute;
+      background: var(--card-bg);
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      max-width: 250px;
+      z-index: 10;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .tooltip h4 { color: var(--primary); margin-bottom: 0.25rem; }
+    .tooltip p { font-size: 0.9rem; color: var(--light-text); }
+    .branches-container { position: relative; }
+    .branch-connector {
+      position: absolute;
+      width: 2px;
+      background: var(--primary-light);
+      opacity: 0.4;
+    }
+    .notification {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      background: var(--primary);
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s;
+    }
+    .notification.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    /* Add specific animations for each step */
+    .engine-step[data-step="1"].active {
+      animation: intake 0.5s ease-in-out;
+    }
+    .engine-step[data-step="2"].active {
+      animation: compression 0.5s ease-in-out;
+    }
+    .engine-step[data-step="3"].active {
+      animation: power 0.5s ease-in-out;
+    }
+    .engine-step[data-step="4"].active {
+      animation: exhaust 0.5s ease-in-out;
+    }
+    @keyframes intake {
+      0% { transform: translateY(20px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes compression {
+      0% { transform: scale(1.2); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes power {
+      0% { transform: scale(0.8); opacity: 0; }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes exhaust {
+      0% { transform: translateY(0); opacity: 1; }
+      50% { transform: translateY(-10px); opacity: 0.5; }
+      100% { transform: translateY(-20px); opacity: 0; }
+    }
+    .path-divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--primary-light), transparent);
+      margin: 1.5rem 0;
+      opacity: 0.3;
+    }
+    .node.secondary {
+      margin-left: 1.5rem;
+      border-left: 3px solid var(--primary-light);
+      background: rgba(119, 102, 204, 0.03);
+      font-size: 0.98rem;
+    }
+    .node.tertiary {
+      margin-left: 3rem;
+      border-left: 3px solid var(--secondary);
+      background: rgba(255, 133, 162, 0.03);
+      font-size: 0.95rem;
+    }
+    .node.quaternary {
+      margin-left: 4.5rem;
+      border-left: 3px solid var(--gradient-end);
+      background: rgba(221, 102, 187, 0.03);
+      font-size: 0.92rem;
+    }
+    .node.secondary.affordable,
+    .node.tertiary.affordable,
+    .node.quaternary.affordable {
+      opacity: 1;
+      border: 2px solid var(--secondary);
+      box-shadow: 0 0 10px rgba(255, 133, 162, 0.3);
+      background: rgba(119, 102, 204, 0.1);
+    }
+    .node.secondary.locked,
+    .node.tertiary.locked,
+    .node.quaternary.locked {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .fun-facts {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: rgba(119, 102, 204, 0.05);
+      border-radius: 0.5rem;
+      text-align: center;
+      width: 100%;
+    }
+    .fun-fact {
+      font-size: 0.9rem;
+      color: var(--primary-dark);
+      margin: 0.5rem 0;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+    .fun-fact.show {
+      opacity: 1;
+    }
+    /* Add styles for info section */
+    .info-section {
+      padding: 2rem;
+      margin: 2rem 0;
+      background: var(--card-bg);
+      border-radius: 1rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .info-section h2 {
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .timeline-item {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      padding: 1rem;
+      background: rgba(119, 102, 204, 0.05);
+      border-radius: 0.5rem;
+      transition: transform 0.2s;
+      cursor: pointer;
+    }
+    .timeline-item:hover {
+      transform: translateX(10px);
+      background: rgba(119, 102, 204, 0.1);
+    }
+    .timeline-item .year {
+      font-weight: 600;
+      color: var(--primary);
+      min-width: 80px;
+    }
+    .timeline-item .event {
+      color: var(--text);
+    }
+    /* Add styles for credits section */
+    .credits {
+      padding: 1.5rem;
+      margin-top: 2rem;
+      background: var(--card-bg);
+      border-radius: 1rem 1rem 0 0;
+      text-align: center;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .credits h3 {
+      color: var(--primary);
+      margin-bottom: 1rem;
+    }
+    .credits p {
+      color: var(--light-text);
+      font-size: 1rem;
+    }
+    .credits ul {
+      list-style: none;
+      margin: 1rem 0;
+      padding: 0;
+    }
+    .credits li {
+      color: var(--light-text);
+      margin: 0.25rem 0;
+    }
+    .credits .copyright {
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+    .engine-demo {
+      background: var(--bg);
+    }
+    .demo-container {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .engine-diagram {
+      flex: 1;
+      height: 400px;
+      background: var(--card-bg);
+      border-radius: 1rem;
+      padding: 2rem;
+      position: relative;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+    }
+    .piston-assembly {
+      position: relative;
+      height: 100%;
+      width: 60%;
+      margin: 0 auto;
+    }
+    .cylinder {
+      position: absolute;
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      height: 60%;
+      background: #ddd;
+      border-radius: 10px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+    }
+    .piston {
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 70%;
+      height: 40px;
+      background: #999;
+      border-radius: 5px;
+      animation: piston-motion 4s infinite ease-in-out;
+    }
+    .connecting-rod {
+      position: absolute;
+      top: 60%;
+      left: 50%;
+      transform-origin: top;
+      width: 10px;
+      height: 100px;
+      background: #666;
+      animation: rod-motion 4s infinite linear;
+    }
+    .crankshaft {
+      position: absolute;
+      bottom: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 40px;
+      background: #444;
+      border-radius: 50%;
+      animation: rotate 4s infinite linear;
+    }
+    .valves {
+      position: absolute;
+      top: 5%;
+      width: 100%;
+      display: flex;
+      justify-content: space-around;
+    }
+    .valve-stem {
+      width: 4px;
+      height: 20px;
+      background: #666;
+    }
+    .valve-head {
+      width: 20px;
+      height: 6px;
+      background: #666;
+      border-radius: 3px;
+    }
+    .spark-plug {
+      position: absolute;
+      top: 15%;
+      right: 20%;
+      width: 10px;
+      height: 30px;
+      background: #888;
+    }
+    .cycle-description {
+      flex: 1;
+      padding: 1rem;
+    }
+    .cycle-step {
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: var(--card-bg);
+      border-radius: 0.5rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .cycle-step h3 {
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+    .cycle-step p {
+      color: var(--light-text);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+    @keyframes piston-motion {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(100px); }
+    }
+    @keyframes rod-motion {
+      0% { transform: rotate(-15deg); }
+      50% { transform: rotate(15deg); }
+      100% { transform: rotate(-15deg); }
+    }
+    @keyframes rotate {
+      from { transform: translateX(-50%) rotate(0deg); }
+      to { transform: translateX(-50%) rotate(360deg); }
+    }
+    @media (max-width: 768px) {
+      .demo-container {
+        flex-direction: column;
+      }
+      .engine-diagram {
+        width: 100%;
+        height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>
+        The Otto Engine Simulator
+      </h1>
+      <p>Experience the revolutionary four-stroke cycle that changed the world of transportation</p>
+    </header>
+    
+    <div class="game-container">
+      <!-- Left Section: Engine -->
+      <div class="engine-section">
+        <div class="stats-bar">
+          <div class="stat">
+            <div id="power-value" class="stat-value">0</div>
+            <div class="stat-label">Power</div>
+          </div>
+          <div class="stat">
+            <div id="power-per-click" class="stat-value">1</div>
+            <div class="stat-label">Per Click</div>
+          </div>
+          <div class="stat">
+            <div id="power-per-second" class="stat-value">0</div>
+            <div class="stat-label">Per Second</div>
+          </div>
+        </div>
+        <div class="engine-container" id="engine-clicker">
+          <div class="engine">
+            <div class="engine-inner">
+              <div class="engine-step active" data-step="1">
+                <div class="engine-step-title">Intake</div>
+                <div class="engine-step-desc">Air and fuel mixture enters the cylinder</div>
+              </div>
+              <div class="engine-step" data-step="2">
+                <div class="engine-step-title">Compression</div>
+                <div class="engine-step-desc">Mixture is compressed by the piston</div>
+              </div>
+              <div class="engine-step" data-step="3">
+                <div class="engine-step-title">Power</div>
+                <div class="engine-step-desc">Spark ignites mixture, driving piston down</div>
+              </div>
+              <div class="engine-step" data-step="4">
+                <div class="engine-step-title">Exhaust</div>
+                <div class="engine-step-desc">Spent gases are pushed out of cylinder</div>
+              </div>
+            </div>
+          </div>
+          <div class="particles" id="particles"></div>
+        </div>
+        
+        <!-- Move fun facts here -->
+        <div class="fun-facts">
+          <div id="fun-fact" class="fun-fact"></div>
+        </div>
+      </div>
+      
+      <!-- Right Section: Progress Map -->
+      <div class="progress-section">
+        <h2 class="progress-title">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+          Development Path
+        </h2>
+        <div class="progress-map" id="progress-map">
+          <!-- Paths will be generated here -->
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="tooltip" id="tooltip"></div>
+  <div class="notification" id="notification"></div>
+  
+  <!-- Add new sections before and after game -->
+  <div class="info-section">
+    <h2>The Otto Engine Revolution</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="year">1832</div>
+        <div class="event">Nikolaus Otto is born in Holzhausen, Germany</div>
+      </div>
+      <div class="timeline-item">
+        <div class="year">1861</div>
+        <div class="event">First experiments with gas engines</div>
+      </div>
+      <div class="timeline-item">
+        <div class="year">1876</div>
+        <div class="event">Patents the four-stroke engine design</div>
+      </div>
+      <div class="timeline-item">
+        <div class="year">1891</div>
+        <div class="event">Otto passes away, leaving a lasting legacy</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add footer section -->
+  <footer class="credits">
+    <h3>Credits</h3>
+    <p>Created with ❤️ by Siddharth Mirchandani, 9-2</p>
+    <p class="copyright">© 2024 All rights reserved</p>
+  </footer>
+  
+  <script>
+    // Game state
+    const state = {
+      power: 0,
+      powerPerClick: 1,
+      powerPerSecond: 0,
+      currentStep: 1,
+      unlockedPaths: [],
+      unlockedNodes: [],
+      selectedPath: null,
+      lastNotification: null
+    };
+
+    // Otto Cycle Engine branches in order
+    const paths = [
+      {
+        id: 'transportation',
+        name: 'Transportation',
+        cost: 10,
+        description: '+1 power/click',
+        effect: { type: 'powerPerClick', value: 1 },
+        icon: '🚗',
+        subpaths: [
+          { 
+            id: 'land-vehicles', 
+            name: 'Land Vehicles', 
+            cost: 20, 
+            effect: { type: 'powerPerClick', value: 1 }, 
+            icon: '🚗',
+            subpaths: [
+              { id: 'automobiles', name: 'Automobiles', cost: 50, effect: { type: 'powerPerClick', value: 2 }, icon: '🚗', requires: ['land-vehicles'] },
+              { id: 'motorcycles', name: 'Motorcycles', cost: 100, effect: { type: 'powerPerClick', value: 3 }, icon: '🏍️', requires: ['land-vehicles'] }
+            ]
+          },
+          { 
+            id: 'air-transport', 
+            name: 'Air Transport', 
+            cost: 30, 
+            effect: { type: 'powerPerSecond', value: 1 }, 
+            icon: '✈️',
+            subpaths: [
+              { id: 'aviation', name: 'Aviation', cost: 200, effect: { type: 'powerPerSecond', value: 2 }, icon: '✈️', requires: ['air-transport'] },
+              { id: 'aerospace', name: 'Aerospace', cost: 300, effect: { type: 'powerPerSecond', value: 3 }, icon: '🚀', requires: ['air-transport'] }
+            ]
+          },
+          { 
+            id: 'water-transport', 
+            name: 'Water Transport', 
+            cost: 25, 
+            effect: { type: 'powerPerSecond', value: 1 }, 
+            icon: '🚢',
+            subpaths: [
+              { id: 'marine-engines', name: 'Marine Engines', cost: 150, effect: { type: 'powerPerSecond', value: 2 }, icon: '🚢', requires: ['water-transport'] },
+              { id: 'naval-tech', name: 'Naval Technology', cost: 250, effect: { type: 'powerPerSecond', value: 3 }, icon: '⚓', requires: ['water-transport'] }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'society',
+        name: 'Society',
+        cost: 15,
+        description: '+1 power/second',
+        effect: { type: 'powerPerSecond', value: 1 },
+        icon: '👥',
+        subpaths: [
+          {
+            id: 'economics',
+            name: 'Economics',
+            cost: 15,
+            effect: { type: 'powerPerSecond', value: 1 },
+            icon: '💰',
+            subpaths: [
+              { id: 'improved-economics', name: 'Improved Economics', cost: 60, effect: { type: 'powerPerSecond', value: 2 }, icon: '📈', requires: ['economics'] },
+              { id: 'global-trade', name: 'Global Trade', cost: 120, effect: { type: 'powerPerSecond', value: 3 }, icon: '🌐', requires: ['economics'] }
+            ]
+          },
+          {
+            id: 'environment',
+            name: 'Environment',
+            cost: 20,
+            effect: { type: 'powerPerClick', value: 2 },
+            icon: '🌱',
+            subpaths: [
+              { id: 'environment-issues', name: 'Environmental Issues', cost: 80, effect: { type: 'powerPerClick', value: 3 }, icon: '🌱', requires: ['environment'] },
+              { id: 'green-tech', name: 'Green Technology', cost: 160, effect: { type: 'powerPerClick', value: 4 }, icon: '♻️', requires: ['environment'] }
+            ]
+          },
+          {
+            id: 'cultural',
+            name: 'Cultural',
+            cost: 25,
+            effect: { type: 'powerPerSecond', value: 1 },
+            icon: '🎭',
+            subpaths: [
+              { id: 'culture', name: 'Culture Development', cost: 100, effect: { type: 'powerPerSecond', value: 2 }, icon: '🎭', requires: ['cultural'] },
+              { id: 'social-impact', name: 'Social Impact', cost: 200, effect: { type: 'powerPerSecond', value: 3 }, icon: '🤝', requires: ['cultural'] }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'technology',
+        name: 'Technology',
+        cost: 20,
+        description: '+2 power/click',
+        effect: { type: 'powerPerClick', value: 2 },
+        icon: '⚙️',
+        subpaths: [
+          {
+            id: 'basic-tech',
+            name: 'Basic Technology',
+            cost: 20,
+            effect: { type: 'powerPerClick', value: 2 },
+            icon: '⚙️',
+            subpaths: [
+              { id: 'engine-refinement', name: 'Engine Refinement', cost: 80, effect: { type: 'powerPerClick', value: 3 }, icon: '⚙️', requires: ['basic-tech'] },
+              { id: 'advanced-mechanics', name: 'Advanced Mechanics', cost: 160, effect: { type: 'powerPerClick', value: 4 }, icon: '🔧', requires: ['basic-tech'] }
+            ]
+          },
+          {
+            id: 'efficiency',
+            name: 'Efficiency',
+            cost: 30,
+            effect: { type: 'powerPerClick', value: 2 },
+            icon: '📊',
+            subpaths: [
+              { id: 'optimization', name: 'Optimization', cost: 120, effect: { type: 'powerPerClick', value: 3 }, icon: '📈', requires: ['efficiency'] },
+              { id: 'automation', name: 'Automation', cost: 240, effect: { type: 'powerPerSecond', value: 3 }, icon: '🤖', requires: ['efficiency'] }
+            ]
+          },
+          {
+            id: 'innovation',
+            name: 'Innovation',
+            cost: 40,
+            effect: { type: 'powerPerSecond', value: 2 },
+            icon: '💡',
+            subpaths: [
+              { id: 'research', name: 'Research', cost: 150, effect: { type: 'powerPerClick', value: 4 }, icon: '🔬', requires: ['innovation'] },
+              { id: 'future-tech', name: 'Future Tech', cost: 300, effect: { type: 'powerPerSecond', value: 4 }, icon: '🚀', requires: ['innovation'] }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'industry',
+        name: 'Industry',
+        cost: 25,
+        description: '+1 power/second',
+        effect: { type: 'powerPerSecond', value: 1 },
+        icon: '🏭',
+        subpaths: [
+          {
+            id: 'manufacturing',
+            name: 'Manufacturing',
+            cost: 25,
+            effect: { type: 'powerPerSecond', value: 1 },
+            icon: '🏭',
+            subpaths: [
+              { id: 'construction', name: 'Construction', cost: 100, effect: { type: 'powerPerSecond', value: 2 }, icon: '🏗️', requires: ['manufacturing'] },
+              { id: 'mass-production', name: 'Mass Production', cost: 200, effect: { type: 'powerPerSecond', value: 3 }, icon: '🏭', requires: ['manufacturing'] }
+            ]
+          },
+          {
+            id: 'resources',
+            name: 'Resources',
+            cost: 35,
+            effect: { type: 'powerPerClick', value: 2 },
+            icon: '⛏️',
+            subpaths: [
+              { id: 'mining', name: 'Mining', cost: 140, effect: { type: 'powerPerClick', value: 4 }, icon: '⛏️', requires: ['resources'] },
+              { id: 'processing', name: 'Processing', cost: 280, effect: { type: 'powerPerSecond', value: 4 }, icon: '⚡', requires: ['resources'] }
+            ]
+          },
+          {
+            id: 'infrastructure',
+            name: 'Infrastructure',
+            cost: 45,
+            effect: { type: 'powerPerSecond', value: 2 },
+            icon: '🏢',
+            subpaths: [
+              { id: 'utilities', name: 'Utilities', cost: 180, effect: { type: 'powerPerSecond', value: 3 }, icon: '💡', requires: ['infrastructure'] },
+              { id: 'logistics', name: 'Logistics', cost: 360, effect: { type: 'powerPerSecond', value: 5 }, icon: '🚛', requires: ['infrastructure'] }
+            ]
+          }
+        ]
+      }
+    ];
+
+    // DOM Elements
+    const powerValueEl = document.getElementById('power-value');
+    const powerPerClickEl = document.getElementById('power-per-click');
+    const powerPerSecondEl = document.getElementById('power-per-second');
+    const engineClickerEl = document.getElementById('engine-clicker');
+    const progressMapEl = document.getElementById('progress-map');
+    const particlesEl = document.getElementById('particles');
+    const tooltipEl = document.getElementById('tooltip');
+    const notificationEl = document.getElementById('notification');
+    const engineSteps = document.querySelectorAll('.engine-step');
+
+    function formatNumber(num) {
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+    function updateDisplay() {
+      powerValueEl.textContent = formatNumber(Math.floor(state.power));
+      powerPerClickEl.textContent = formatNumber(state.powerPerClick);
+      powerPerSecondEl.textContent = formatNumber(state.powerPerSecond);
+    }
+    function addPower(amount) {
+      state.power += amount;
+      updateDisplay();
+      updateAffordability();
+    }
+    
+    // Add this array of fun facts
+    const funFacts = [
+      "Nikolaus Otto developed the first practical four-stroke engine in 1876, revolutionizing transportation.",
+      "The Otto cycle is still the basis for most modern car engines.",
+      "Early Otto engines ran on coal gas rather than gasoline!",
+      "Otto's invention helped launch the second industrial revolution.",
+      "The first Otto engine ran at only 180 RPM - modern engines can reach over 6000 RPM!",
+      "Otto never learned to drive a car, despite inventing the engine that powered them.",
+      "The Otto engine company evolved into Deutz AG, which still exists today.",
+      "Otto's engine design replaced steam engines due to its superior efficiency.",
+      "The four-stroke cycle is sometimes called the 'Otto cycle' in his honor.",
+      "Otto's engine design increased fuel efficiency by over 300% compared to earlier engines.",
+      "The Otto engine led to the development of motorcycles, aircraft, and modern power tools.",
+      "Early Otto engines were primarily used for industrial machinery before automobiles.",
+      "Otto was awarded the Elliott Cresson Medal for his revolutionary engine design.",
+      "The Otto engine's success helped establish Germany as an industrial powerhouse.",
+      "Otto's original engine design used a slide valve instead of traditional valves."
+    ];
+
+    let currentFactIndex = -1;
+
+    function showNewFact() {
+      const factEl = document.getElementById('fun-fact');
+      factEl.classList.remove('show');
+      
+      setTimeout(() => {
+        currentFactIndex = (currentFactIndex + 1) % funFacts.length;
+        factEl.textContent = funFacts[currentFactIndex];
+        factEl.classList.add('show');
+      }, 300);
+    }
+
+    // Show initial fact
+    showNewFact();
+
+    // Engine click handler – pass the click event to position the upgrade popup at the pointer
+    engineClickerEl.addEventListener('click', (e) => {
+      addPower(state.powerPerClick);
+      engineSteps.forEach(step => step.classList.remove('active'));
+      state.currentStep = (state.currentStep % 4) + 1;
+      document.querySelector(`.engine-step[data-step="${state.currentStep}"]`).classList.add('active');
+      createParticles();
+      showClickValue(e);
+      
+      // Add this line to show a new fact every 5 clicks
+      if (state.currentStep === 1) { // Show new fact at start of cycle
+        showNewFact();
+      }
+    });
+    
+    // Create particle effects
+    function createParticles() {
+      const count = 8;
+      const engine = engineClickerEl.querySelector('.engine');
+      const rect = engine.getBoundingClientRect();
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      for (let i = 0; i < count; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 20 + Math.random() * 30;
+        const x = centerX + Math.cos(angle) * distance;
+        const y = centerY + Math.sin(angle) * distance;
+        const size = 3 + Math.random() * 5;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${x}px`;
+        particle.style.top = `${y}px`;
+        particlesEl.appendChild(particle);
+        setTimeout(() => {
+          particle.style.opacity = 0.8;
+          const finalDistance = distance + 60 + Math.random() * 40;
+          const finalX = centerX + Math.cos(angle) * finalDistance;
+          const finalY = centerY + Math.sin(angle) * finalDistance;
+          particle.style.transition = `all 1s ease-out`;
+          particle.style.left = `${finalX}px`;
+          particle.style.top = `${finalY}px`;
+          particle.style.opacity = 0;
+        }, 10);
+        setTimeout(() => { particlesEl.removeChild(particle); }, 1000);
+      }
+    }
+    
+    // Show the power increment popup exactly where clicked in larger font
+    function showClickValue(e) {
+      const clickValue = document.createElement('div');
+      clickValue.classList.add('engine-click-value');
+      clickValue.textContent = `+${state.powerPerClick}`;
+      clickValue.style.fontSize = '1.5rem';
+      clickValue.style.left = `${e.offsetX}px`;
+      clickValue.style.top = `${e.offsetY}px`;
+      clickValue.style.transition = 'all 0.7s ease-out';
+      engineClickerEl.appendChild(clickValue);
+      
+      // Start animation
+      setTimeout(() => {
+        clickValue.style.opacity = '1';
+        clickValue.style.transform = 'translateY(-30px)';
+      }, 10);
+      
+      // Fade out while continuing to move up
+      setTimeout(() => {
+        clickValue.style.opacity = '0';
+        clickValue.style.transform = 'translateY(-60px)';
+      }, 300);
+      
+      setTimeout(() => {
+        engineClickerEl.removeChild(clickValue);
+      }, 1000);
+    }
+    
+    // Generate the progress map for each branch and its nodes
+    function generateProgressMap() {
+      progressMapEl.innerHTML = '';
+      
+      // Add tutorial blurb
+      const tutorialEl = document.createElement('div');
+      tutorialEl.style.padding = '1rem';
+      tutorialEl.style.marginBottom = '1rem';
+      tutorialEl.style.background = 'rgba(119, 102, 204, 0.1)';
+      tutorialEl.style.borderRadius = '0.5rem';
+      tutorialEl.innerHTML = `
+        <p style="font-size: 0.9rem; color: var(--light-text);">
+          Click the engine to generate power. Choose a development path below to unlock new upgrades.
+          Each path offers different bonuses to your power generation.
+        </p>
+      `;
+      progressMapEl.appendChild(tutorialEl);
+
+      paths.forEach((path, index) => {
+        const pathEl = document.createElement('div');
+        pathEl.classList.add('path');
+        
+        if (!state.unlockedPaths.includes(path.id)) {
+          // Create main path node
+          const nodeEl = document.createElement('div');
+          nodeEl.classList.add('node');
+          nodeEl.id = `path-${path.id}`;
+          
+          // Add visual indicator for affordability
+          const canAfford = state.power >= path.cost;
+          if (canAfford) {
+            nodeEl.classList.add('affordable');
+            nodeEl.classList.remove('locked');
+          } else {
+            nodeEl.classList.add('locked');
+          }
+
+          const iconEl = document.createElement('div');
+          iconEl.classList.add('node-icon');
+          iconEl.textContent = path.icon;
+          
+          const contentEl = document.createElement('div');
+          contentEl.classList.add('node-content');
+          contentEl.innerHTML = `
+            <div class="node-title">${path.name}</div>
+            <div class="node-desc">${path.description}</div>
+          `;
+          
+          const costEl = document.createElement('div');
+          costEl.classList.add('node-cost');
+          costEl.textContent = path.cost;
+          
+          nodeEl.appendChild(iconEl);
+          nodeEl.appendChild(contentEl);
+          nodeEl.appendChild(costEl);
+          
+          // Fix the click handler
+          nodeEl.addEventListener('click', () => {
+            const canAfford = state.power >= path.cost;
+            if (canAfford) {
+              state.power -= path.cost;
+              state.unlockedPaths.push(path.id);
+              
+              // Apply the effect
+              if (path.effect.type === 'powerPerClick') {
+                state.powerPerClick += path.effect.value;
+              } else if (path.effect.type === 'powerPerSecond') {
+                state.powerPerSecond += path.effect.value;
+              }
+              
+              updateDisplay();
+              generateProgressMap();
+              showNotification(`${path.name} path unlocked!`);
+            }
+          });
+          
+          pathEl.appendChild(nodeEl);
+          progressMapEl.appendChild(pathEl);
+        } else {
+          // Show subpaths for unlocked paths
+          const pathHeaderEl = document.createElement('h3');
+          pathHeaderEl.classList.add('path-header');
+          pathHeaderEl.textContent = path.name;
+          pathEl.appendChild(pathHeaderEl);
+
+          const nodesContainer = document.createElement('div');
+          nodesContainer.classList.add('branches-container');
+          pathEl.appendChild(nodesContainer);
+
+          path.subpaths.forEach((subpath, subIndex) => {
+            const isSubpathUnlocked = state.unlockedNodes.includes(subpath.id);
+            
+            if (isSubpathUnlocked || !state.unlockedNodes.some(id => subpath.subpaths.some(n => n.id === id))) {
+              const nodeEl = createNodeElement(subpath, false, 'secondary');
+              nodesContainer.appendChild(nodeEl);
+
+              if (isSubpathUnlocked) {
+                // Show third-level nodes
+                subpath.subpaths.forEach((node, nodeIndex) => {
+                  const isNodeUnlocked = state.unlockedNodes.includes(node.id);
+                  const prereqsMet = !node.requires || node.requires.every(req => state.unlockedNodes.includes(req));
+                  
+                  if (isNodeUnlocked || prereqsMet) {
+                    const isLast = (nodeIndex === subpath.subpaths.length - 1);
+                    const thirdLevelEl = createNodeElement(node, isLast, 'tertiary');
+                    nodesContainer.appendChild(thirdLevelEl);
+                    
+                    // Add connector
+                    const connector = document.createElement('div');
+                    connector.classList.add('branch-connector');
+                    nodesContainer.appendChild(connector);
+                    
+                    setTimeout(() => {
+                      const parentRect = nodeEl.getBoundingClientRect();
+                      const childRect = thirdLevelEl.getBoundingClientRect();
+                      connector.style.left = `${parentRect.left + parentRect.width / 2}px`;
+                      connector.style.top = `${parentRect.bottom}px`;
+                      connector.style.height = `${childRect.top - parentRect.bottom}px`;
+                    }, 10);
+                  }
+                });
+              }
+            }
+          });
+          
+          progressMapEl.appendChild(pathEl);
+        }
+        
+        // Add divider after each path except the last one
+        if (index < paths.length - 1) {
+          const divider = document.createElement('div');
+          divider.classList.add('path-divider');
+          progressMapEl.appendChild(divider);
+        }
+      });
+    }
+    
+    // Create a node element for the upgrade map
+    // isLast indicates whether the node is the final upgrade (multiplier) for that branch.
+    function createNodeElement(node, isLast = false, level = 'primary') {
+      const nodeEl = document.createElement('div');
+      nodeEl.classList.add('node');
+      nodeEl.id = `node-${node.id}`;
+      
+      // Add level-specific class
+      if (level === 'secondary') {
+        nodeEl.classList.add('secondary');
+      } else if (level === 'tertiary') {
+        nodeEl.classList.add('tertiary');
+      } else if (level === 'quaternary') {
+        nodeEl.classList.add('quaternary');
+      }
+
+      const isUnlocked = state.unlockedNodes.includes(node.id);
+      const canAfford = state.power >= node.cost;
+      const prereqsMet = !node.requires || node.requires.every(req => state.unlockedNodes.includes(req));
+      
+      if (isUnlocked) {
+        nodeEl.classList.add('active');
+      } else if (canAfford && prereqsMet) {
+        nodeEl.classList.add('affordable');
+      } else {
+        nodeEl.classList.add('locked');
+      }
+      
+      const iconEl = document.createElement('div');
+      iconEl.classList.add('node-icon');
+      iconEl.textContent = node.icon;
+      nodeEl.appendChild(iconEl);
+      const contentEl = document.createElement('div');
+      contentEl.classList.add('node-content');
+      const titleEl = document.createElement('div');
+      titleEl.classList.add('node-title');
+      titleEl.textContent = node.name;
+      contentEl.appendChild(titleEl);
+      // Instead of the full description, display concise upgrade text:
+      let upgradeText = "";
+      if (isLast) {
+        upgradeText = (node.effect.type === 'powerPerClick') 
+                      ? `*${node.effect.value} power/click` 
+                      : `*${node.effect.value} power/second`;
+      } else {
+        upgradeText = (node.effect.type === 'powerPerClick') 
+                      ? `+${node.effect.value} power/click` 
+                      : `+${node.effect.value} power/second`;
+      }
+      const descEl = document.createElement('div');
+      descEl.classList.add('node-desc');
+      descEl.textContent = upgradeText;
+      contentEl.appendChild(descEl);
+      nodeEl.appendChild(contentEl);
+      const costEl = document.createElement('div');
+      costEl.classList.add('node-cost');
+      costEl.textContent = node.cost;
+      nodeEl.appendChild(costEl);
+      
+      // When clicked, if affordable and not unlocked, purchase the upgrade.
+      nodeEl.addEventListener('click', () => {
+        if (!state.unlockedNodes.includes(node.id) && state.power >= node.cost) {
+          state.power -= node.cost;
+          state.unlockedNodes.push(node.id);
+          // If node belongs to a first-tier branch, unlock the branch.
+          paths.forEach(path => {
+            if (path.subpaths.some(n => n.id === node.id)) {
+              if (!state.unlockedPaths.includes(path.id)) {
+                state.unlockedPaths.push(path.id);
+              }
+            }
+          });
+          // Apply upgrade: if it's a multiplier upgrade (last node), multiply the current stat.
+          if (isLast) {
+            if (node.effect.type === 'powerPerClick') {
+              state.powerPerClick *= node.effect.value;
+            } else if (node.effect.type === 'powerPerSecond') {
+              state.powerPerSecond *= node.effect.value;
+            }
+          } else {
+            if (node.effect.type === 'powerPerClick') {
+              state.powerPerClick += node.effect.value;
+            } else if (node.effect.type === 'powerPerSecond') {
+              state.powerPerSecond += node.effect.value;
+            }
+          }
+          updateDisplay();
+          generateProgressMap();
+          showNotification(`${node.name} unlocked!`);
+        }
+      });
+      
+      // Tooltip displays the upgrade text and cost.
+      nodeEl.addEventListener('mouseenter', (e) => {
+        tooltipEl.innerHTML = `<h4>${node.name}</h4><p>${upgradeText}<br>Cost: ${node.cost}</p>`;
+        tooltipEl.style.left = `${e.pageX + 10}px`;
+        tooltipEl.style.top = `${e.pageY + 10}px`;
+        tooltipEl.style.visibility = 'visible';
+        tooltipEl.style.opacity = '1';
+      });
+      nodeEl.addEventListener('mouseleave', () => {
+        tooltipEl.style.visibility = 'hidden';
+        tooltipEl.style.opacity = '0';
+      });
+      return nodeEl;
+    }
+    
+    function showNotification(message) {
+      notificationEl.textContent = message;
+      notificationEl.classList.add('show');
+      clearTimeout(state.lastNotification);
+      state.lastNotification = setTimeout(() => {
+        notificationEl.classList.remove('show');
+      }, 2000);
+    }
+    
+    updateDisplay();
+    generateProgressMap();
+
+    // Add automatic power per second update
+    setInterval(() => {
+      if (state.powerPerSecond > 0) {
+        addPower(state.powerPerSecond);
+      }
+    }, 1000);
+
+    // Add this function after the other function definitions
+    function updateAffordability() {
+      // Update main paths
+      paths.forEach(path => {
+        const nodeEl = document.getElementById(`path-${path.id}`);
+        if (nodeEl && !state.unlockedPaths.includes(path.id)) {
+          const canAfford = state.power >= path.cost;
+          if (canAfford) {
+            nodeEl.classList.add('affordable');
+            nodeEl.classList.remove('locked');
+          } else {
+            nodeEl.classList.add('locked');
+            nodeEl.classList.remove('affordable');
+          }
+        }
+
+        // Check secondary and tertiary nodes if path is unlocked
+        if (state.unlockedPaths.includes(path.id)) {
+          path.subpaths.forEach(subpath => {
+            // Update secondary nodes
+            const subpathEl = document.getElementById(`node-${subpath.id}`);
+            if (subpathEl && !state.unlockedNodes.includes(subpath.id)) {
+              const canAfford = state.power >= subpath.cost;
+              if (canAfford) {
+                subpathEl.classList.add('affordable');
+                subpathEl.classList.remove('locked');
+              } else {
+                subpathEl.classList.add('locked');
+                subpathEl.classList.remove('affordable');
+              }
+            }
+
+            // Update tertiary nodes if subpath is unlocked
+            if (state.unlockedNodes.includes(subpath.id) && subpath.subpaths) {
+              subpath.subpaths.forEach(node => {
+                const nodeEl = document.getElementById(`node-${node.id}`);
+                if (nodeEl && !state.unlockedNodes.includes(node.id)) {
+                  const canAfford = state.power >= node.cost;
+                  const prereqsMet = !node.requires || node.requires.every(req => state.unlockedNodes.includes(req));
+                  
+                  if (canAfford && prereqsMet) {
+                    nodeEl.classList.add('affordable');
+                    nodeEl.classList.remove('locked');
+                  } else {
+                    nodeEl.classList.add('locked');
+                    nodeEl.classList.remove('affordable');
+                  }
+                }
+              });
+            }
+          });
+        }
+      });
+    }
+
+    // Update affordability every 100ms
+    setInterval(updateAffordability, 100);
+
+    // Add this to your existing script section
+    function updateEngineDemo() {
+      const cycleSteps = document.querySelectorAll('.cycle-step');
+      let currentStep = 0;
+      
+      setInterval(() => {
+        cycleSteps.forEach((step, index) => {
+          if (index === currentStep) {
+            step.style.background = 'rgba(119, 102, 204, 0.1)';
+          } else {
+            step.style.background = 'var(--card-bg)';
+          }
+        });
+        currentStep = (currentStep + 1) % 4;
+      }, 1000);
+    }
+
+    // Initialize the demo
+    updateEngineDemo();
+  </script>
+</body>
+</html>
+
